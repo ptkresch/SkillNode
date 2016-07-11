@@ -1,0 +1,33 @@
+{
+	"name": "SkillNode",
+	"version": "0.0.0",
+	"license": "UNLICENSED",
+	"description": "Social media app",
+	"main": "server.js",
+	"dependencies": {
+	    "body-parser": "^1.4.3",
+	    "express": "^4.4.5"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node server.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ptkresch/SkillNode.git"
+	},
+	"keywords": [
+		"social",
+		"media",
+		"skill"
+	],
+	"author": "Preston Kresch",
+	"bugs": {
+   	 "url": "https://github.com/ptkresch/SkillNode/issues"
+  	},
+	"homepage": "https://github.com/ptkresch/SkillNode",
+	"engines" : {
+    	"node" : "0.12.x"
+    }
+}

@@ -1,0 +1,41 @@
+[
+    {
+        "id": 1388534400000,
+        "author": "Preston Kresch",
+        "text": "Hey there!",
+        "skills": [
+            "Martial Arts",
+            "Music Production",
+            "3d Art",
+            "Programming & Science"
+        ]
+    },
+    {
+        "id": 1420070400000,
+        "author": "Duke Nukem",
+        "text": "I've come to kick ass and chew bubblegum. And I'm all out of bubblegum.",
+        "skills": [
+            "Killing Aliens",
+            "Kicking Ass",
+            "Chewing Bubblegum"
+        ]
+    },
+    {
+        "id": 1468184390762,
+        "author": "Lex Luthor",
+        "text": "But dad, games are all we have.",
+        "skills": [
+            "Losing to Superman",
+            "Being Bald"
+        ]
+    },
+    {
+        "id": 1468184628186,
+        "author": "Wall-E",
+        "text": "Whoah.",
+        "skills": [
+            "Eve?",
+            "EEEEEVVVVEEEE!!!"
+        ]
+    }
+]
