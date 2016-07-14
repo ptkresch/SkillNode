@@ -5,10 +5,22 @@
         "text": "Hey there!",
         "imgurl": "http://placehold.it/350x150",
         "skills": [
-            {"id": 1, "skill": "Martial Arts"},
-            {"id": 2, "skill": "Music Production"},
-            {"id": 3, "skill": "3d Art"},
-            {"id": 4, "skill": "Programming & Science"}
+            {
+                "id": 1,
+                "skill": "Martial Arts"
+            },
+            {
+                "id": 2,
+                "skill": "Music Production"
+            },
+            {
+                "id": 3,
+                "skill": "3d Art"
+            },
+            {
+                "id": 4,
+                "skill": "Programming & Science"
+            }
         ]
     },
     {
@@ -17,9 +29,18 @@
         "imgurl": "http://placehold.it/200x150",
         "text": "I've come to kick ass and chew bubblegum. And I'm all out of bubblegum.",
         "skills": [
-            {"id": 5, "skill": "Killing Aliens"},
-            {"id": 6, "skill": "Kicking Ass"},
-            {"id": 7, "skill": "Chewing Bubblegum"}
+            {
+                "id": 5,
+                "skill": "Killing Aliens"
+            },
+            {
+                "id": 6,
+                "skill": "Kicking Ass"
+            },
+            {
+                "id": 7,
+                "skill": "Chewing Bubblegum"
+            }
         ]
     },
     {
@@ -28,18 +49,25 @@
         "imgurl": "http://placehold.it/150x250",
         "text": "But dad, games are all we have.",
         "skills": [
-            {"id": 8, "skill": "Losing to Superman"},
-            {"id": 9, "skill": "Being Bald"}
+            {
+                "id": 8,
+                "skill": "Losing to Superman"
+            },
+            {
+                "id": 9,
+                "skill": "Being Bald"
+            }
         ]
     },
     {
-        "id": 1468184628186,
-        "author": "Wall-E",
-        "imgurl": "http://placehold.it/100x100",
-        "text": "Whoah.",
+        "id": 1468461163483,
+        "author": "Sokka",
+        "text": "The universe just loves proving me wrong.",
         "skills": [
-            {"id": 10, "skill": "Eve?"},
-            {"id": 11, "skill": "EEEEEVVVVEEEE!!!"}
+            {
+                "id": "0",
+                "skill": "Boomerang Throwing"
+            }
         ]
     }
 ]

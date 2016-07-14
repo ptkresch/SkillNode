@@ -34,11 +34,13 @@ app.post('/api/skills', function(req, res) {
       console.error(err);
       process.exit(1);
     }
+    console.log(data);
     var skills = JSON.parse(data);
     var newSkill = {
       id: Date.now(),
       author: req.body.author,
       text: req.body.text,
+      skills: req.body.skills,
     };
     skills.push(newSkill);
     fs.writeFile(SKILLS_FILE, JSON.stringify(skills, null, 4), function(err) {
