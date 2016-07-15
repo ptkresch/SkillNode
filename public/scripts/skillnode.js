@@ -1,27 +1,14 @@
 //Node bubble conversations - topics posted, can join while seeing other topics/bubbles
-//Changes to clicking nodes shoudld be handled by the nodecores
+
+//To do: add polling for chat/comment area, fix keys when submitting new user 
+//(problem due to the slogan area being the same)
+//Add picture upload
 
 var NodeBox = React.createClass({
-	loadNodesFromServer: function() {
-		$.ajax({
-			url: this.props.url,
-			dataType: 'json',
-			cache: false,
-			success: function(data) {
-				this.setState({data: data});
-			}.bind(this),
-			error: function(xhr, status, err) {
-				console.error(this.props.url, status, err.toString());
-			}.bind(this)
-		});
-	},
 	handleNodeSubmit: function(node) {
 		var nodes = this.state.data;
 		node.id = Date.now();
 		var newNodes = nodes.concat([node]);
-		console.log(newNodes);
-		// var $node = $.param(node);
-		// console.log($node);
 		this.setState({data: newNodes});
 		$.ajax({
 			url: this.props.url,
@@ -29,7 +16,6 @@ var NodeBox = React.createClass({
 			type: 'POST',
 			data: node,
 			success: function(data) {
-				console.log(data);
 				this.setState({data: data});
 			}.bind(this),
 			error: function(xhr, status, err) {
@@ -40,40 +26,19 @@ var NodeBox = React.createClass({
 	getInitialState: function() {
 		return {data: []};
 	},
-	componentDidMount: function() {
-		this.loadNodesFromServer();
-		setInterval(this.loadNodesFromServer, this.props.pollInterval);
-	},
 	render: function() {
 		return (
 			<div className="nodeBox">
-				<NodeList data={this.state.data} />
+				<PollTest url={this.props.url} topicsurl={this.props.topicsurl}/>
 				<NodeForm onNodeSubmit={this.handleNodeSubmit} />
 			</div>
 		);
 	}
 });
 
-var NodeList = React.createClass({
-	render: function() {
-		return(
-			<div>
-			{this.props.data.map(function(node, i) {
-				return(
-					<div className="nodeList" key={performance.now()}>
-						<Avatar imgurl = {node.imgurl} />
-						<NodeCore author={node.author} key={node.id} id={node.id} text={node.text} skills={node.skills}>
-						</NodeCore>
-					</div>
-				);
-			})}
-			</div>
-		)
-	}
-});
-
 var NodeCore = React.createClass({
 	render: function() {
+		var self = this;
 		return (
 			<div className="nodeCore">
 				<h2 className="nodeAuthor">
@@ -84,7 +49,7 @@ var NodeCore = React.createClass({
 				</h4>
 				<ul className="nodeSkills">
 					{this.props.skills.map(function(skill,j) {
-						return(<li key={skill.id}>{skill.skill}</li>);
+						return(<li key={skill.id}><Button skill={skill.skill} topicsurl={self.props.topicsurl}/>{skill.skill}</li>);
 					})}
 				</ul>
 			</div>
@@ -121,9 +86,7 @@ var NodeForm = React.createClass({
 			return;
 		}
 		this.props.onNodeSubmit({author: author, text: text, skills: skills});
-		console.log(this.refs.Formfield);
 		this.refs.Formfield.reset();
-		var formRef = this.refs.Formfield;
 		this.setState({author: '', text: '', inputs: ['input-0'], skills: this.state.skills.clear()});
 	},
 	render: function() {
@@ -144,9 +107,59 @@ var NodeForm = React.createClass({
 			</div>
 			<input type="submit" value="Post" />
 			</form>
-			<button onClick={this.createInput}>
+			<button onClick={this.createInput} type="button">
 					Click to add input
 			</button>
+			</div>
+		);
+	}
+});
+
+var PollTest = React.createClass({
+	getInitialState: function() {
+		return {data: [], url: this.props.url, topicsurl: this.props.topicsurl};
+	},
+	componentWillMount: function() {
+		this.poll();
+	},
+	startPolling: function() {
+		var self = this;
+		setTimeout(function() {
+			self.poll();
+		}, 4000);
+	},
+	poll: function() {
+		var self = this;
+		$.ajax({
+			url: this.props.url,
+			dataType: 'json',
+			cache: false,
+			success: function(data) {
+				this.setState({data: data});
+				this.startPolling();
+			}.bind(this),
+			error: function(xhr, status, err) {
+				console.error(this.props.url, status, err.toString());
+			}.bind(this)
+		});
+	},
+	render: function() {
+		var self = this;
+		return(
+			<div className="pollTest">
+				<div>
+					{this.state.data.map(function(node, i) {
+						return(
+							<div key={node.text}>
+							<div className="nodeList" key={node.author}>
+								<Avatar imgurl = {node.imgurl} />
+								<NodeCore author={node.author} key={node.id} id={node.id} text={node.text} skills={node.skills} topicsurl={self.state.topicsurl}>
+								</NodeCore>
+							</div>
+							</div>
+						);
+					})}
+				</div>
 			</div>
 		);
 	}
@@ -172,29 +185,140 @@ var PagePic = React.createClass({
 
 var Button = React.createClass({
 	getInitialState: function() {
-		return {count: 0};
+		return {count: 0, skill: this.props.skill, skillBox: 0};
 	},
 	handleClick: function() {
-		console.log(this.state.count);
-		this.setState({count: this.state.count += 1});
+		this.setState({count: this.state.count+= 1});
+		if (this.state.count % 2 == 0) {
+			this.setState({skillBox: false});
+		}else if (this.state.count % 2 == 1) {
+			this.setState({skillBox: true});
+		}
 	},
 	render: function() {
+		var self = this;
+		var div;
+		if (self.state.skillBox == true) {
+			div = <div><SkillChat skill={this.props.skill} topicsurl={this.props.topicsurl}/></div>
+		}else {
+			div = <div></div>
+		}
 		return (
 			<div>
 			<div>Counter: {this.state.count} </div>
-			<button onClick={this.handleClick}> </button>
+			{div}
+			<button onClick={this.handleClick}>Click Me!</button>
 			</div>
 		);
 	}
 });
 
-ReactDOM.render(
-	<Button />,
-	document.getElementById('button')
-);
+var SkillChat = React.createClass({
+	getInitialState: function() {
+		return {comments: [{"id": "initialid", "comments": [{"id":"commentid","comment":"initialComment"}]}]};
+	},
+	componentWillMount: function() {
+		this.loadCommentsFromServer();
+	},
+	loadCommentsFromServer: function() {
+		var self = this;
+		var topic = {"topic": this.props.skill};
+		$.ajax({
+			url: this.props.topicsurl,
+			dataType: 'json',
+			cache: false,
+			data: topic,
+			success: function(comments) {
+				this.setState({comments: comments});
+			}.bind(this),
+			error: function(xhr, status, err) {
+				console.error(this.props.topicsurl, status, err.toString());
+			}.bind(this)
+		});
+	},
+	handleCommentSubmit: function(comment) {
+		// var newComment = this.state.text;
+		// newComment.id = Date.now();
+		// var newNodes = nodes.concat([node]);
+		// this.setState({data: newNodes});
+		$.ajax({
+			url: this.props.topicsurl,
+			dataType: 'json',
+			type: 'POST',
+			data: comment,
+			success: function(data) {
+				this.setState({comments: data});
+			}.bind(this),
+			error: function(xhr, status, err) {
+				console.error(this.props.url, status, err.toString());
+			}.bind(this)
+		});
+	},
+	render: function() {
+		return(
+			<div className="SkillChat">
+				<SkillBoard comments={this.state.comments} skill={this.props.skill}/>
+				<SkillForm onCommentSubmit={this.handleCommentSubmit} comments={this.state.comments} skill={this.props.skill} topicsurl={this.props.topicsurl}/>
+			</div>
+		);
+	}
+});
+
+var SkillBoard = React.createClass({
+	render: function() {
+		var self = this;
+		return(
+			<div className="skillBoard">
+				<div className={self.props.skill}>
+					<ul>
+					{self.props.comments.map(function(comment, i) {
+						return <div key={comment.id}>{comment.comments.map(function(singleComment, i) {
+							return <li key={singleComment.id + i}>{singleComment.comment}</li>
+						})}</div>
+					})}
+					</ul>
+				</div>
+			</div>
+		);
+	}
+});
+
+var SkillForm = React.createClass({
+	getInitialState: function() {
+		return {text: ''};
+	},
+	handleSubmit: function(e) {
+		e.preventDefault();
+		var text = this.state.text.trim();
+		var skill = this.props.skill;
+		if (!text) {
+			return;
+		}
+		var length = this.props.comments[0].comments.length.toString();
+		this.props.onCommentSubmit({id: text + length , comment: text, topic: skill});
+		this.refs.Skillfield.reset();
+		this.setState({text: ''});
+	},
+	handleTextChange: function(e) {
+		this.setState({text: e.target.value});
+	},
+	render: function() {
+		var self = this;
+		return(
+			<div>
+			<form className="skillForm" onSubmit={this.handleSubmit} ref="Skillfield">
+			<input type="text" placeholder="Say something..." value={this.state.text} onChange={this.handleTextChange}/>
+			<input type="submit"/>
+			</form>
+			</div>
+		);
+	}
+});
+
+
 
 
 ReactDOM.render(
-	<NodeBox url="/api/skills" pollInterval={2000} />,
+	<NodeBox url="/api/skills" topicsurl="/api/topics"/>,
 	document.getElementById('nodes')
 );
