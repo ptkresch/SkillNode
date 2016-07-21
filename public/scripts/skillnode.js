@@ -1,9 +1,11 @@
 //Node bubble conversations - topics posted, can join while seeing other topics/bubbles
 
-//To do: add polling for chat/comment area, fix keys when submitting new user 
-//(problem due to the slogan area being the same)
+//To do: fix keys when submitting new user, fix unmounting chat, make separate message states for each skill
+//make messages load when chat room becomes visible (won't display messages until submit button is hit)
+//(keys problem due to the slogan area being the same)
 //Add picture upload
-
+//Separate chatroom functionality from skill list?
+var socket = io.connect('http://localhost:3000/');
 var NodeBox = React.createClass({
 	handleNodeSubmit: function(node) {
 		var nodes = this.state.data;
@@ -136,7 +138,7 @@ var PollTest = React.createClass({
 			cache: false,
 			success: function(data) {
 				this.setState({data: data});
-				this.startPolling();
+				// this.startPolling();
 			}.bind(this),
 			error: function(xhr, status, err) {
 				console.error(this.props.url, status, err.toString());
@@ -147,19 +149,23 @@ var PollTest = React.createClass({
 		var self = this;
 		return(
 			<div className="pollTest">
-				<div>
-					{this.state.data.map(function(node, i) {
-						return(
-							<div key={node.text}>
-							<div className="nodeList" key={node.author}>
-								<Avatar imgurl = {node.imgurl} />
-								<NodeCore author={node.author} key={node.id} id={node.id} text={node.text} skills={node.skills} topicsurl={self.state.topicsurl}>
-								</NodeCore>
-							</div>
-							</div>
-						);
-					})}
-				</div>
+				{this.state.data.map(function(node, i) {
+					return(
+						<div key={node.text}>
+						<div className="nodeList" key={node.author}>
+							<Avatar imgurl = {node.imgurl} />
+							<NodeCore 
+								author={node.author} 
+								key={node.id} 
+								id={node.id} 
+								text={node.text} 
+								skills={node.skills} 
+								topicsurl={self.state.topicsurl}
+							/>
+						</div>
+						</div>
+					);
+				})}
 			</div>
 		);
 	}
@@ -185,9 +191,33 @@ var PagePic = React.createClass({
 
 var Button = React.createClass({
 	getInitialState: function() {
-		return {count: 0, skill: this.props.skill, skillBox: 0};
+		return {count: 0, skill: this.props.skill, skillBox: 0, messages: [], text: ''};
+	},
+	componentDidMount: function() {
+		var messages = [];
+		var self = this;
+		socket.emit('subscribe', this.props.skill);
+		socket.on('init', this.initialize);
+		// socket.on('send', this.messageReceive);
+		socket.on('message', function (data) {
+	        if(data.message) {
+	            messages.push(data.message);
+	            self.setState({messages: messages});
+	        } else {
+	            console.log("There is a problem:", data);
+	        }
+	    });
+	},
+	messageReceive: function(message) {
+		console.log('hi');
+	},
+	initialize: function(data) {
+		console.log(data);
+		console.log(socket);
+		// socket.join(data.room);
 	},
 	handleClick: function() {
+		socket.emit('subscribe', this.props.skill);
 		this.setState({count: this.state.count+= 1});
 		if (this.state.count % 2 == 0) {
 			this.setState({skillBox: false});
@@ -195,17 +225,45 @@ var Button = React.createClass({
 			this.setState({skillBox: true});
 		}
 	},
+	handleSend: function() {
+		var self = this;
+	   	socket.emit('send', {room: this.state.skill, message: this.state.text});
+	},
+	handleTextChange: function(e) {
+		this.setState({text: e.target.value})
+	},
 	render: function() {
 		var self = this;
 		var div;
 		if (self.state.skillBox == true) {
-			div = <div><SkillChat skill={this.props.skill} topicsurl={this.props.topicsurl}/></div>
+			div = 
+			<div>
+				<SkillChat 
+					skill={this.state.skill} 
+					topicsurl={this.props.topicsurl}
+				/>
+				<div id="allMessages">
+					{this.state.messages.map(function(message, i) {
+						return (<div key={i}>{message}</div>)
+					})}
+				</div>
+				<input 
+					id="field" 
+					onChange={this.handleTextChange} 
+					value={this.state.text}
+				/>
+				<input 
+					id="send" 
+					type="button" 
+					value="send" 
+					onClick={this.handleSend}
+				/>
+			</div>
 		}else {
 			div = <div></div>
 		}
 		return (
 			<div>
-			<div>Counter: {this.state.count} </div>
 			{div}
 			<button onClick={this.handleClick}>Click Me!</button>
 			</div>
@@ -220,6 +278,12 @@ var SkillChat = React.createClass({
 	componentWillMount: function() {
 		this.loadCommentsFromServer();
 	},
+	startPolling: function() {
+		var self = this;
+		setTimeout(function() {
+			self.loadCommentsFromServer();
+		}, 4000);
+	},
 	loadCommentsFromServer: function() {
 		var self = this;
 		var topic = {"topic": this.props.skill};
@@ -230,6 +294,7 @@ var SkillChat = React.createClass({
 			data: topic,
 			success: function(comments) {
 				this.setState({comments: comments});
+				this.startPolling();
 			}.bind(this),
 			error: function(xhr, status, err) {
 				console.error(this.props.topicsurl, status, err.toString());
@@ -237,10 +302,6 @@ var SkillChat = React.createClass({
 		});
 	},
 	handleCommentSubmit: function(comment) {
-		// var newComment = this.state.text;
-		// newComment.id = Date.now();
-		// var newNodes = nodes.concat([node]);
-		// this.setState({data: newNodes});
 		$.ajax({
 			url: this.props.topicsurl,
 			dataType: 'json',

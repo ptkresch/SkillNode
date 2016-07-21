@@ -5,6 +5,7 @@
 	"description": "Social media app",
 	"main": "server.js",
 	"dependencies": {
+		"socket.io": "latest",
 	    "body-parser": "^1.4.3",
 	    "express": "^4.4.5"
 	},

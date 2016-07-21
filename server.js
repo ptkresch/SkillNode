@@ -1,9 +1,17 @@
+'use strict';
 var fs = require('fs');
 var path = require('path');
-var express = require('express');
 var bodyParser = require('body-parser');
 var find = require('findit');
-var app = express();
+var express = require('express');
+var app = express(),
+  http = require('http'),
+  server = http.Server(app);
+  // socket = require('./socket.js');
+app.set('port', (process.env.PORT || 3000));
+var io = require('socket.io').listen(server);
+// socket(io);
+
 
 var SKILLS_FILE = path.join(__dirname, 'skills.json');
 var TOPICS_FILE = path.join(__dirname, '/topics');
@@ -21,9 +29,15 @@ finder.on('file', function(file) {
 
 });
 
-app.set('port', (process.env.PORT || 3000));
 
 app.use('/', express.static(path.join(__dirname, 'public')));
+app.get("/", function(req, res) {
+  res.sendFile(__dirname+'/public/index.html');
+  res.sendFile(__dirname+'./socket.js');
+  // res.sendFile(__dirname+'/public/scripts/skillnode.js');
+});
+
+// app.use('/', express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -140,7 +154,21 @@ app.post('/api/skills', function(req, res) {
   });
 });
 
+io.sockets.on('connection', function(socket) {
+  socket.on('subscribe', function(room) {
+      socket.room = room;
+      socket.join(room);
+  });
+  socket.on('send', function (data) {
+      // console.log(data.room);
+      // console.log(socket.adapter.rooms);
+      // console.log(socket.adapter.rooms[data.room]);
+      io.to(data.room).emit('message', data);
+  });
+});
 
-app.listen(app.get('port'), function() {
+server.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
 });
+
+module.exports = app;
