@@ -155,15 +155,18 @@ app.post('/api/skills', function(req, res) {
 });
 
 io.sockets.on('connection', function(socket) {
+
   socket.on('subscribe', function(room) {
-      socket.room = room;
       socket.join(room);
+      socket.room = room;
+      console.log("User Joined: " + socket.room + " Chatroom");
   });
-  socket.on('send', function (data) {
+
+  socket.on('message', function (data) {
       // console.log(data.room);
-      // console.log(socket.adapter.rooms);
+      console.log(socket.adapter.rooms);
       // console.log(socket.adapter.rooms[data.room]);
-      io.to(data.room).emit('message', data);
+      io.sockets.in(data.room).emit('message', data);
   });
 });
 

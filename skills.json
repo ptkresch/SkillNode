@@ -6,29 +6,6 @@
         "imgurl": "http://placehold.it/100x100",
         "skills": [
             {
-                "id": 1,
-                "skill": "Martial Arts"
-            },
-            {
-                "id": 2,
-                "skill": "Music Production"
-            },
-            {
-                "id": 3,
-                "skill": "3d Art"
-            },
-            {
-                "id": 4,
-                "skill": "Programming & Science"
-            }
-        ]
-    },
-    {
-        "id": 1468553676142,
-        "author": "Preston Kresch",
-        "text": "Yo!",
-        "skills": [
-            {
                 "id": "0",
                 "skill": "Martial Arts"
             },
@@ -53,6 +30,21 @@
         "skills": [
             {
                 "id": "0",
+                "skill": "3d Art"
+            }
+        ]
+    },
+    {
+        "id": 1469139827179,
+        "author": "Bob Ross",
+        "text": "Happy little trees....",
+        "skills": [
+            {
+                "id": "0",
+                "skill": "Painting"
+            },
+            {
+                "id": "1",
                 "skill": "3d Art"
             }
         ]

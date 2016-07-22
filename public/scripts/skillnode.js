@@ -1,10 +1,15 @@
 //Node bubble conversations - topics posted, can join while seeing other topics/bubbles
 
-//To do: fix keys when submitting new user, fix unmounting chat, make separate message states for each skill
-//make messages load when chat room becomes visible (won't display messages until submit button is hit)
-//(keys problem due to the slogan area being the same)
+//To do: fix keys when submitting new user, (node.text in polltest render)
+//fix unmounting chat
+//make messages load when chat room becomes visible --
+	//--(won't display messages until submit button is hit)(use ajax to store info)
+//Ensure skill keys represent individual skills?
 //Add picture upload
-//Separate chatroom functionality from skill list?
+
+//Posted topics with unusual symbols like & won't be parsed correctly by the server
+
+
 var socket = io.connect('http://localhost:3000/');
 var NodeBox = React.createClass({
 	handleNodeSubmit: function(node) {
@@ -51,7 +56,17 @@ var NodeCore = React.createClass({
 				</h4>
 				<ul className="nodeSkills">
 					{this.props.skills.map(function(skill,j) {
-						return(<li key={skill.id}><Button skill={skill.skill} topicsurl={self.props.topicsurl}/>{skill.skill}</li>);
+						return(
+							<li key={skill.id}>
+							{skill.skill}
+							<Button 
+								skill={skill.skill} 
+								topicsurl={self.props.topicsurl}
+								id={skill.id}
+							/>
+							<br/>
+							</li>
+						);
 					})}
 				</ul>
 			</div>
@@ -95,14 +110,34 @@ var NodeForm = React.createClass({
 		var self = this;
 		return(
 			<div>
-			<form className="nodeForm" onSubmit={this.handleSubmit} ref="Formfield">
-			<input type="text"  placeholder="Your name" value={this.state.author} onChange={this.handleAuthorChange}/>
-			<input type="text" placeholder="Say something..." value={this.state.text} onChange={this.handleTextChange}/>
+			<form 
+				className="nodeForm" 
+				onSubmit={this.handleSubmit} 
+				ref="Formfield"
+			>
+			<input 
+				type="text"  
+				placeholder="Your name" 
+				value={this.state.author} 
+				onChange={this.handleAuthorChange}
+			/>
+			<input 
+				type="text" 
+				placeholder="Say something..." 
+				value={this.state.text} 
+				onChange={this.handleTextChange}
+			/>
 			<div id="nodeForm">
 				<div>
 					<div id="dynamicInput">
 						{this.state.inputs.map(function(input, i){
-							return <input type="text" placeholder="Your Skill" key={i} id={i} onChange={self.handleSkillChange}/>
+							return <input 
+								type="text" 
+								placeholder="Your Skill" 
+								key={i} 
+								id={i} 
+								onChange={self.handleSkillChange}
+							/>
 						})}
 					</div>
 				</div>
@@ -138,7 +173,7 @@ var PollTest = React.createClass({
 			cache: false,
 			success: function(data) {
 				this.setState({data: data});
-				// this.startPolling();
+				this.startPolling();
 			}.bind(this),
 			error: function(xhr, status, err) {
 				console.error(this.props.url, status, err.toString());
@@ -191,33 +226,36 @@ var PagePic = React.createClass({
 
 var Button = React.createClass({
 	getInitialState: function() {
-		return {count: 0, skill: this.props.skill, skillBox: 0, messages: [], text: ''};
+		return {
+			count: 0, 
+			skill: this.props.skill, 
+			skillBox: 0, 
+			messages: [{room: this.props.skill, 
+			allMessages: [{message: ''}]}], 
+			text: ''
+		};
 	},
 	componentDidMount: function() {
-		var messages = [];
 		var self = this;
-		socket.emit('subscribe', this.props.skill);
-		socket.on('init', this.initialize);
-		// socket.on('send', this.messageReceive);
+		var x = Immutable.List();
+		x = x.set(self.props.id, {room: self.state.skill, allMessages: []});
+		var allMessages = [];
+
 		socket.on('message', function (data) {
 	        if(data.message) {
-	            messages.push(data.message);
-	            self.setState({messages: messages});
+	        	if (data.room == self.state.skill) {
+	        		allMessages.push({message: data.message});
+	        		x = x.set(self.props.id, {room: self.props.skill, allMessages: allMessages});
+	        		var y = x.toArray();
+		            self.setState({messages: y});
+	        	}
 	        } else {
 	            console.log("There is a problem:", data);
 	        }
 	    });
 	},
-	messageReceive: function(message) {
-		console.log('hi');
-	},
-	initialize: function(data) {
-		console.log(data);
-		console.log(socket);
-		// socket.join(data.room);
-	},
 	handleClick: function() {
-		socket.emit('subscribe', this.props.skill);
+		socket.emit('subscribe', this.state.skill);
 		this.setState({count: this.state.count+= 1});
 		if (this.state.count % 2 == 0) {
 			this.setState({skillBox: false});
@@ -225,9 +263,11 @@ var Button = React.createClass({
 			this.setState({skillBox: true});
 		}
 	},
-	handleSend: function() {
+	handleSubmit: function(e) {
+		e.preventDefault();
 		var self = this;
-	   	socket.emit('send', {room: this.state.skill, message: this.state.text});
+	   	socket.emit('message', {room: self.state.skill, message: self.state.text});
+	   	this.setState({text: ''})
 	},
 	handleTextChange: function(e) {
 		this.setState({text: e.target.value})
@@ -243,21 +283,30 @@ var Button = React.createClass({
 					topicsurl={this.props.topicsurl}
 				/>
 				<div id="allMessages">
-					{this.state.messages.map(function(message, i) {
-						return (<div key={i}>{message}</div>)
+					{self.state.messages.map(function(chatrooms, i) {
+						if (chatrooms !== undefined) {
+							return <div key={chatrooms.room}>
+								{chatrooms.allMessages.map(function(message, k) {
+									return <div key={k}>
+										{message.message}
+									</div>
+								})}
+							</div>
+						}
 					})}
 				</div>
-				<input 
-					id="field" 
-					onChange={this.handleTextChange} 
-					value={this.state.text}
-				/>
-				<input 
-					id="send" 
-					type="button" 
-					value="send" 
-					onClick={this.handleSend}
-				/>
+				<form onSubmit={this.handleSubmit} autoComplete="off">
+					<input 
+						id="field" 
+						onChange={this.handleTextChange} 
+						value={this.state.text}
+					/>
+					<input 
+						id="send" 
+						type="submit" 
+						value="send"
+					/>
+				</form>
 			</div>
 		}else {
 			div = <div></div>
@@ -273,9 +322,22 @@ var Button = React.createClass({
 
 var SkillChat = React.createClass({
 	getInitialState: function() {
-		return {comments: [{"id": "initialid", "comments": [{"id":"commentid","comment":"initialComment"}]}]};
+		return {comments: 
+			[
+				{
+					"id": "initialid", 
+					"comments": 
+					[
+						{
+							"id":"commentid",
+							"comment":"initialComment"
+						}
+					]
+				}
+			]
+		};
 	},
-	componentWillMount: function() {
+	componentDidMount: function() {
 		this.loadCommentsFromServer();
 	},
 	startPolling: function() {
@@ -293,11 +355,11 @@ var SkillChat = React.createClass({
 			cache: false,
 			data: topic,
 			success: function(comments) {
-				this.setState({comments: comments});
-				this.startPolling();
+				self.setState({comments: comments});
+				self.startPolling();
 			}.bind(this),
 			error: function(xhr, status, err) {
-				console.error(this.props.topicsurl, status, err.toString());
+				console.error(self.props.topicsurl, status, err.toString());
 			}.bind(this)
 		});
 	},
@@ -318,8 +380,16 @@ var SkillChat = React.createClass({
 	render: function() {
 		return(
 			<div className="SkillChat">
-				<SkillBoard comments={this.state.comments} skill={this.props.skill}/>
-				<SkillForm onCommentSubmit={this.handleCommentSubmit} comments={this.state.comments} skill={this.props.skill} topicsurl={this.props.topicsurl}/>
+				<SkillBoard 
+					comments={this.state.comments} 
+					skill={this.props.skill}
+				/>
+				<SkillForm 
+					onCommentSubmit={this.handleCommentSubmit} 
+					comments={this.state.comments} 
+					skill={this.props.skill} 
+					topicsurl={this.props.topicsurl}
+				/>
 			</div>
 		);
 	}
@@ -332,11 +402,15 @@ var SkillBoard = React.createClass({
 			<div className="skillBoard">
 				<div className={self.props.skill}>
 					<ul>
-					{self.props.comments.map(function(comment, i) {
-						return <div key={comment.id}>{comment.comments.map(function(singleComment, i) {
-							return <li key={singleComment.id + i}>{singleComment.comment}</li>
-						})}</div>
-					})}
+						{self.props.comments.map(function(comment, i) {
+							return <div key={comment.id}>
+								{comment.comments.map(function(singleComment, i) {
+									return <li key={singleComment.id + i}>
+										{singleComment.comment}
+									</li>
+								})}
+							</div>
+						})}
 					</ul>
 				</div>
 			</div>
@@ -367,8 +441,17 @@ var SkillForm = React.createClass({
 		var self = this;
 		return(
 			<div>
-			<form className="skillForm" onSubmit={this.handleSubmit} ref="Skillfield">
-			<input type="text" placeholder="Say something..." value={this.state.text} onChange={this.handleTextChange}/>
+			<form 
+				className="skillForm" 
+				onSubmit={this.handleSubmit} 
+				ref="Skillfield"
+			>
+			<input 
+				type="text" 
+				placeholder="Say something..." 
+				value={this.state.text} 
+				onChange={this.handleTextChange}
+			/>
 			<input type="submit"/>
 			</form>
 			</div>
